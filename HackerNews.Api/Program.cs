@@ -1,23 +1,42 @@
+using HackerNews.Api.Extensions;
+using HackerNews.Api.Middleware;
+using HackerNews.Infrastructure;
+using HackerNews.Application;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- Service Registration ---
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Application layer (business services)
+builder.Services.AddApplication(builder.Configuration);
+builder.Services.AddApplicationServices();
+
+// Infrastructure layer (HttpClient, Polly, Cache, Settings)
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// Response caching (optional layer on top of in-memory cache)
+builder.Services.AddResponseCaching();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// --- Middleware Pipeline ---
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HackerNews API v1"));
 }
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
+app.UseResponseCaching();
 app.MapControllers();
 
 app.Run();
+
+// Required for integration tests with WebApplicationFactory<Program>
+public partial class Program { }

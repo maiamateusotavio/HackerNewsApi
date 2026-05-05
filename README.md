@@ -1,6 +1,6 @@
 # Hacker News Best Stories API
 
-A RESTful API built with **ASP.NET Core 8** that retrieves the top *n* best stories from
+A RESTful API built with **ASP.NET Core 10** that retrieves the top *n* best stories from
 [Hacker News](https://news.ycombinator.com/), ordered by score descending.
 
 ---
@@ -11,20 +11,20 @@ A RESTful API built with **ASP.NET Core 8** that retrieves the top *n* best stor
 
 | Tool | Version |
 |------|---------|
-| [.NET SDK](https://dotnet.microsoft.com/download) | 8.0+ |
+| [.NET SDK](https://dotnet.microsoft.com/download) | 10.0+ |
 | Git | Any recent |
 
 ### Run the application
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/maiamateusotavio/HackerNewsApi.git
 cd HackerNewsApi
 
 # Restore & run
-dotnet run --project src/HackerNews.Api
+dotnet run --project HackerNews.Api
 
-# The API starts at http://localhost:5000
-# Swagger UI available at http://localhost:5000/swagger
+# The API starts at http://localhost:5030
+# Swagger UI available at http://localhost:5030/swagger
 ```
 
 ### Run the tests
@@ -37,13 +37,13 @@ dotnet test
 
 ```bash
 # Get the 10 best stories (default)
-curl http://localhost:5000/api/stories/best
+curl http://localhost:5030/api/stories/best
 
 # Get the top 5
-curl http://localhost:5000/api/stories/best?n=5
+curl http://localhost:5030/api/stories/best?n=5
 
 # Get the top 50
-curl http://localhost:5000/api/stories/best?n=50
+curl http://localhost:5030/api/stories/best?n=50
 ```
 
 ---
@@ -87,38 +87,37 @@ All errors follow [RFC 7807 Problem Details](https://tools.ietf.org/html/rfc7807
 
 ```
 HackerNewsApi/
-├── src/
-│   ├── HackerNews.Api/              ← ASP.NET Core host, controllers, middleware
-│   │   ├── Controllers/
-│   │   │   └── StoriesController.cs  ← Single endpoint: GET /api/stories/best
-│   │   ├── Extensions/
-│   │   │   └── ApplicationServiceExtensions.cs
-│   │   ├── Middleware/
-│   │   │   └── GlobalExceptionMiddleware.cs
-│   │   └── Program.cs
-│   │
-│   ├── HackerNews.Application/      ← Business logic (no framework dependencies)
-│   │   ├── DTOs/
-│   │   │   ├── HackerNewsItemResponse.cs   ← Maps from HN Firebase API
-│   │   │   └── StoryResponse.cs            ← Maps to our public API contract
-│   │   ├── Interfaces/
-│   │   │   ├── IHackerNewsClient.cs
-│   │   │   └── IStoryService.cs
-│   │   └── Services/
-│   │       └── StoryService.cs       ← Cache + parallel fetch + sort
-│   │
-│   └── HackerNews.Infrastructure/    ← External concerns (HTTP, config)
-│       ├── Clients/
-│       │   └── HackerNewsClient.cs   ← Typed HttpClient for HN API
-│       ├── Configuration/
-│       │   └── HackerNewsSettings.cs ← Strongly-typed settings
-│       └── DependencyInjection.cs    ← Polly policies + HttpClientFactory
+├── HackerNews.Api/                   ← ASP.NET Core host, controllers, middleware
+│   ├── Controllers/
+│   │   └── StoriesController.cs       ← Single endpoint: GET /api/stories/best
+│   ├── Middleware/
+│   │   └── GlobalExceptionMiddleware.cs
+│   └── Program.cs
 │
-└── tests/
-    └── HackerNews.Tests/
-        └── Services/
-            ├── StoryServiceTests.cs
-            └── StoriesControllerTests.cs
+├── HackerNews.Application/           ← Business logic (no framework dependencies)
+│   ├── Configuration/
+│   │   └── StoryServiceSettings.cs
+│   ├── DTOs/
+│   │   ├── HackerNewsItemResponse.cs  ← Maps from HN Firebase API
+│   │   └── StoryResponse.cs           ← Maps to our public API contract
+│   ├── Interfaces/
+│   │   ├── IHackerNewsClient.cs
+│   │   └── IStoryService.cs
+│   ├── Services/
+│   │   └── StoryService.cs            ← Cache + parallel fetch + sort
+│   └── DependencyInjection.cs
+│
+├── HackerNews.Infrastructure/         ← External concerns (HTTP, config)
+│   ├── Clients/
+│   │   └── HackerNewsClient.cs        ← Typed HttpClient for HN API
+│   ├── Configuration/
+│   │   └── HackerNewsClientSettings.cs
+│   └── DependencyInjection.cs         ← Polly policies + HttpClientFactory
+│
+└── HackerNews.Tests/
+    └── Services/
+        ├── StoryServiceTests.cs
+        └── StoriesControllerTests.cs
 ```
 
 ### Layer Responsibilities
@@ -130,6 +129,8 @@ HackerNewsApi/
 | **Infrastructure** | HttpClient, Polly policies, config binding | Application (interfaces) |
 
 The dependency flow is **Api → Application ← Infrastructure**, following the Dependency Inversion Principle.
+
+A Domain layer was intentionally omitted — this problem has no domain entities, invariants, or business rules that would justify one. The solution is an integration and orchestration problem, and adding Domain would be unnecessary complexity.
 
 ---
 
@@ -175,6 +176,12 @@ If a single story fails to load (404, timeout after retries), it is **skipped** 
 failing the entire request. The caller gets `n - k` results where `k` is the number of
 unrecoverable items. This is preferable to returning a 500 for one bad story out of 200.
 
+### 6. Settings Separation
+
+Configuration was split into `StoryServiceSettings` (Application layer) and `HackerNewsClientSettings`
+(Infrastructure layer). Each layer reads only the properties it needs from the same `appsettings.json`
+section, avoiding a circular dependency between Application and Infrastructure.
+
 ---
 
 ## Assumptions
@@ -199,27 +206,20 @@ Given more time, these would be the next improvements:
 | **Redis distributed cache** | Enables horizontal scaling (multiple API instances share cache) | Medium |
 | **Background refresh (IHostedService)** | Pre-warms cache periodically so first requests are never cold | Low |
 | **ETag / conditional requests** | Reduces bandwidth to HN API by only fetching changed items | Medium |
-| **Rate limiting (AspNetCoreRateLimit)** | Protects our own API from abusive callers | Low |
+| **Rate limiting** | Protects our own API from abusive callers | Low |
 | **Health checks** | `/health` endpoint that pings HN API for operational monitoring | Low |
 | **Response compression** | Gzip/Brotli for large payloads when n is high | Low |
 | **Integration tests** | `WebApplicationFactory<Program>` with a mocked HN API (WireMock) | Medium |
 | **OpenTelemetry tracing** | Distributed tracing across cache hits/misses and HN API calls | Medium |
 | **API versioning** | `/api/v1/stories/best` for backward-compatible evolution | Low |
-| **Pagination** | `?page=1&pageSize=20` instead of single `n` for large datasets | Low |
 
 ---
 
 ## Technologies
 
-- **.NET 8** / ASP.NET Core 8
+- **.NET 10** / ASP.NET Core 10
 - **Polly** — Retry + Circuit Breaker resilience
 - **HttpClientFactory** — Managed HttpClient lifecycle
 - **IMemoryCache** — In-process caching
 - **Swagger / Swashbuckle** — API documentation
 - **xUnit + Moq + FluentAssertions** — Testing
-
----
-
-## License
-
-MIT

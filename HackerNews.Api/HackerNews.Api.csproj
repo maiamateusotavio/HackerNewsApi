@@ -12,12 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\HackerNews.Application\HackerNews.Application.csproj" />
+    <ProjectReference Include="..\HackerNews.Infrastructure\HackerNews.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HackerNews.Application\HackerNews.Application.csproj" />
-    <ProjectReference Include="..\HackerNews.Infrastructure\HackerNews.Infrastructure.csproj" />
+    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>

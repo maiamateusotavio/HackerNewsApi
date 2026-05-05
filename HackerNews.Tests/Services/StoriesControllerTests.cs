@@ -3,11 +3,9 @@ using HackerNews.Api.Controllers;
 using HackerNews.Application.Configuration;
 using HackerNews.Application.DTOs;
 using HackerNews.Application.Interfaces;
-using HackerNews.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
 
 namespace HackerNews.Tests.Services;
 

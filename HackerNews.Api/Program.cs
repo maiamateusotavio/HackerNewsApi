@@ -1,7 +1,6 @@
-using HackerNews.Api.Extensions;
 using HackerNews.Api.Middleware;
-using HackerNews.Infrastructure;
 using HackerNews.Application;
+using HackerNews.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +12,6 @@ builder.Services.AddSwaggerGen();
 
 // Application layer (business services)
 builder.Services.AddApplication(builder.Configuration);
-builder.Services.AddApplicationServices();
 
 // Infrastructure layer (HttpClient, Polly, Cache, Settings)
 builder.Services.AddInfrastructure(builder.Configuration);

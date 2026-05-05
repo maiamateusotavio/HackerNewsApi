@@ -3,12 +3,10 @@ using HackerNews.Application.Configuration;
 using HackerNews.Application.DTOs;
 using HackerNews.Application.Interfaces;
 using HackerNews.Application.Services;
-using HackerNews.Infrastructure.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
 
 namespace HackerNews.Tests.Services;
 

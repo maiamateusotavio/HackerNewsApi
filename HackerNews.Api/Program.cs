@@ -1,6 +1,7 @@
 using HackerNews.Api.Extensions;
 using HackerNews.Api.Middleware;
 using HackerNews.Infrastructure;
+using HackerNews.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,17 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "Hacker News Best Stories API",
-        Version = "v1",
-        Description = "RESTful API to retrieve the best n stories from Hacker News, ordered by score."
-    });
-});
+builder.Services.AddSwaggerGen();
 
 // Application layer (business services)
+builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddApplicationServices();
 
 // Infrastructure layer (HttpClient, Polly, Cache, Settings)

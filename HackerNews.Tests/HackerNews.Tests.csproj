@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HackerNews.Api\HackerNews.Api.csproj" />
     <ProjectReference Include="..\HackerNews.Application\HackerNews.Application.csproj" />
     <ProjectReference Include="..\HackerNews.Infrastructure\HackerNews.Infrastructure.csproj" />
   </ItemGroup>

@@ -21,10 +21,10 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         // 1. Bind settings
-        var settings = new HackerNewsSettings();
-        configuration.GetSection(HackerNewsSettings.SectionName).Bind(settings);
-        services.Configure<HackerNewsSettings>(
-            configuration.GetSection(HackerNewsSettings.SectionName));
+        var settings = new HackerNewsClientSettings();
+        configuration.GetSection(HackerNewsClientSettings.SectionName).Bind(settings);
+        services.Configure<HackerNewsClientSettings>(
+            configuration.GetSection(HackerNewsClientSettings.SectionName));
 
         // 2. Register IMemoryCache
         services.AddMemoryCache();
